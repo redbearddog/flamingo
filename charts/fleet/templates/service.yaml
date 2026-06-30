@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "fleet.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "fleet.labels" . | nindent 4 }}
+{{- with .Values.serviceAnnotations }}
+  annotations:
+    {{- toYaml . | trim | nindent 4 }}
+{{- end }}
+spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  selector:
+    {{- include "fleet.selectorLabels" . | nindent 4 }}
+  ports:
+  - name: fleet
+    port: {{ ternary .Values.fleet.listenPort .Values.fleet.servicePort (eq .Values.fleet.servicePort nil) }}
+    targetPort: {{ .Values.fleet.listenPort }}
+    {{- if and (eq (.Values.service.type | default "ClusterIP") "NodePort") .Values.service.nodePort }}
+    nodePort: {{ .Values.service.nodePort }}
+    {{- end }}

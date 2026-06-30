@@ -1,0 +1,134 @@
+## Section: Kubernetes
+# All settings related to how Fleet is deployed in Kubernetes
+replicas: 1 # The number of Fleet instances to deploy
+revisionHistoryLimit: 10 # Number of old ReplicaSets for Fleet deployment to retain for rollback (set to 0 for unlimited)
+imageRepository: fleetdm/fleet
+imageTag: v4.87.0 # Version of Fleet to deploy
+# imagePullPolicy is optional. If unset, Kubernetes defaults to IfNotPresent
+# for tagged images and Always for the :latest tag. Valid values: Always,
+# IfNotPresent, Never.
+# imagePullPolicy: IfNotPresent
+# imagePullSecrets is optional.
+# imagePullSecrets:
+#   - name: docker
+#   - name: internal
+nameOverride: ""
+fullnameOverride: ""
+podAnnotations: {} # Additional annotations to add to the Fleet pod
+serviceAnnotations: {} # Additional annotations to add to the Fleet service
+serviceAccountAnnotations: {} # Additional annotations to add to the Fleet service account
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+resources:
+  limits:
+    cpu: 1 # 1 CPU Core
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+## Section: Service
+service:
+  type: NodePort
+  nodePort: 30080
+
+## Section: Fleet
+# All of the settings relating to configuring the Fleet server
+fleet:
+  # Will also be the targetPort for the service
+  listenPort: 8080
+  # servicePort is optional.  Use if the service port needs to differ from the listenPort above.
+  # servicePort: 9080
+  # Whether or not to run `fleet db prepare` to run SQL migrations before starting Fleet
+  autoApplySQLMigrations: true
+  # Add extra annotations to the migration Job
+  migrationJobAnnotations:
+  auth:
+    bcryptCost: 12
+    saltKeySize: 24
+  app:
+    tokenKeySize: 24
+    inviteTokenValidityPeriod: 120h # 5 days
+  session:
+    keySize: 64
+    duration: 2160h # 90 days
+  logging:
+    debug: false
+    json: false
+    disableBanner: false
+  extraVolumes: []
+  extraVolumeMounts: []
+  # Currently only passes readOnlyRootFilesystem, runAsNonRoot, runAsUser, runAsGroup
+  securityContext:
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 3333
+    runAsGroup: 3333
+
+## Section: osquery
+# All of the settings related to osquery's interactions with the Fleet server
+osquery:
+  nodeKeySize: 24
+  labelUpdateInterval: 30m
+  detailUpdateInterval: 30m
+
+  # To change where Fleet store the logs sent from osquery, set the values below
+  logging:
+    statusPlugin: filesystem
+    resultPlugin: filesystem
+
+    # To congigure the filesystem logger, change the values below
+    filesystem:
+      statusLogFile: osquery_status # will be placed in the /logs volume
+      resultLogFile: osquery_result # will be placed in the /logs volume
+      enableRotation: false
+      enableCompression: false
+      volumeSize: 20Gi # the maximum size of the volume
+
+## Section: database
+# All of the connection settings for MySQL
+database:
+  # Name of the Secret resource containing MySQL password and TLS secrets
+  secretName: fleet-mysql
+  address: fleet-mysql:3306
+  database: fleet
+  username: fleet
+  passwordKey: user_pwd
+  maxOpenConns: 50
+  maxIdleConns: 50
+  connMaxLifetime: 0
+
+## Section: cache
+# All of the connection settings for Redis
+cache:
+  address: fleet-redis:6379
+  database: "0"
+
+## Section: Environment Variables
+# All of the environment variables that can be set for Fleet
+environments:
+  FLEET_SERVER_PRIVATE_KEY: ""
+
+## Section: Environment Variables from Secrets/CMs
+# envsFrom:
+# - name: MY_ENV_NAME_1
+#   valueFrom:
+#     configMapKeyRef:
+#       name: cm-name
+#       key: cm-key-name
+
+## Section: MySQL subchart
+mysql:
+  enabled: true
+  auth:
+    username: fleet
+    database: fleet
+
+## Section: Redis subchart
+redis:
+  enabled: true
