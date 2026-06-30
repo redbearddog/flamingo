@@ -2,11 +2,11 @@
 
 Helm chart that deploys **FleetDM** with **MySQL** and **Redis** as bundled
 dependencies (`charts/fleet`). The chart is published to GHCR as an OCI package
-at `oci://ghcr.io/redbearddog/fleet`.
+at `oci://ghcr.io/redbearddog/fleet`
 
 The local environment runs on [Kind](https://kind.sigs.k8s.io/). The FleetDM
 service is exposed on nodePort `30080`, mapped to `localhost:8080` by
-`kind-config.yaml`.
+`kind-config.yaml`
 
 ## Prerequisites
 
@@ -34,7 +34,7 @@ To install the published chart from GHCR:
 make install_oci
 ```
 
-Fleet DM should be reachable at <http://localhost:8080>.
+Fleet DM should be reachable at <http://localhost:8080>
 
 ## Teardown
 
@@ -52,7 +52,7 @@ kubectl get pods
 ```
 
 You should see a FleetDM pod plus MySQL and Redis pods (named after the
-`fleet` release).
+`fleet` release)
 
 ### Fleet DM
 
@@ -62,7 +62,7 @@ curl -fsS http://localhost:8080/healthz && echo OK
 ```
 
 `make install` waits for the release to be ready (`--wait`), so a successful
-`/healthz` confirms FleetDM started and connected to its datastore.
+`/healthz` confirms FleetDM started and connected to its datastore
 
 ### MySQL
 
@@ -81,21 +81,21 @@ kubectl exec "$REDIS" -- redis-cli ping
 ```
 
 If the label selectors return nothing, list pods with `kubectl get pods` and
-use the exact pod names.
+use the exact pod names
 
 ## Releasing a new chart version
 
 Chart releases are produced by the **Release chart** GitHub Action
 (`.github/workflows/release.yml`). A new release always bumps the chart version
-first, then packages and pushes to GHCR.
+first, then packages and pushes to GHCR
 
 1. Open the **Actions** tab → **Release chart** → **Run workflow**.
-2. Pick the bump level: `bugfix`, `minor`, or `major`.
+2. Pick the bump level: `bugfix`, `minor`, or `major`
 
 The workflow bumps `version:` in `charts/fleet/Chart.yaml`, commits the change,
 packages the chart with the new `--version` / `--app-version`, and pushes it to
-`oci://ghcr.io/redbearddog`.
+`oci://ghcr.io/redbearddog`
 
 > First release only: the GHCR package is created as **private**. Make it public
 > under GitHub → Packages → `fleet` → Package settings so `make install_oci`
-> can pull it anonymously.
+> can pull it anonymously
